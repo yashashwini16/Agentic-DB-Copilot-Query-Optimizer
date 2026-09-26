@@ -1,0 +1,26 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+copilot:
+  llm:
+    provider: mock
+  embedding:
+    provider: in-process
+  semantic-cache:
+    enabled: true
+    similarity-threshold: 0.85
+  guardrails:
+    read-only-enforced: true
+    max-execution-time-ms: 5000
+    max-rows-returned: 50
+    max-self-correction-attempts: 2

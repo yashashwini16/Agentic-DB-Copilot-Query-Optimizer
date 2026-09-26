@@ -1,0 +1,72 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: agentic-db-copilot
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/copilotdb}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  sql:
+    init:
+      mode: never # Managed by docker init or manual schema script
+
+# LangChain4j & Copilot Settings
+copilot:
+  llm:
+    # Supported providers: openai, ollama, mock
+    provider: ${LLM_PROVIDER:openai}
+    openai:
+      api-key: ${OPENAI_API_KEY:demo-key}
+      model-name: ${OPENAI_MODEL_NAME:gpt-4o-mini}
+      temperature: 0.0
+      timeout-seconds: 60
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      model-name: ${OLLAMA_MODEL_NAME:llama3.1}
+      temperature: 0.0
+  embedding:
+    # Provider: in-process (All-MiniLM-L6-v2 ONNX, zero external dependencies), openai, ollama
+    provider: ${EMBEDDING_PROVIDER:in-process}
+    dimension: 384
+  semantic-cache:
+    enabled: ${SEMANTIC_CACHE_ENABLED:true}
+    similarity-threshold: ${SEMANTIC_CACHE_THRESHOLD:0.88}
+    max-cache-entries: 5000
+  guardrails:
+    read-only-enforced: ${ENFORCE_READ_ONLY:true}
+    max-execution-time-ms: ${MAX_EXECUTION_TIME_MS:5000}
+    max-rows-returned: ${MAX_ROWS_RETURNED:100}
+    max-self-correction-attempts: ${MAX_CORRECTION_ATTEMPTS:3}
+
+# Swagger / OpenAPI Configuration
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+
+# Management & Actuator Endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

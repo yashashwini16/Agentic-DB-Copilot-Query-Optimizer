@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic DB Copilot &amp; Query Optimizer | LangChain4j + Pgvector</title>
+    <!-- Tailwind CSS CDN & Lucide Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        },
+                        dark: {
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            700: '#334155',
+                            600: '#475569',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-emerald-500 selection:text-white">
+
+    <!-- Top Navigation -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <i class="fa-solid fa-brain text-slate-950 text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">
+                        Agentic DB Copilot
+                    </h1>
+                    <p class="text-xs text-slate-400">LangChain4j • Spring Boot • Pgvector Query Optimizer</p>
+                </div>
+            </div>
+
+            <!-- Tab Buttons -->
+            <div class="flex items-center space-x-1 bg-slate-800/80 p-1 rounded-lg border border-slate-700/60 text-sm">
+                <button id="tab-copilot" onclick="switchTab('copilot')" class="px-3 py-1.5 rounded-md font-medium text-emerald-400 bg-slate-700/80 shadow-sm transition">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i> Copilot Studio
+                </button>
+                <button id="tab-schema" onclick="switchTab('schema')" class="px-3 py-1.5 rounded-md font-medium text-slate-400 hover:text-slate-200 transition">
+                    <i class="fa-solid fa-database mr-1.5"></i> Schema Explorer
+                </button>
+                <button id="tab-cache" onclick="switchTab('cache')" class="px-3 py-1.5 rounded-md font-medium text-slate-400 hover:text-slate-200 transition">
+                    <i class="fa-solid fa-bolt mr-1.5"></i> Pgvector Cache (<span id="nav-cache-count">0</span>)
+                </button>
+            </div>
+
+            <!-- Badges -->
+            <div class="hidden md:flex items-center space-x-3 text-xs">
+                <span class="px-2.5 py-1 rounded-full bg-emerald-950/70 border border-emerald-800 text-emerald-300 flex items-center gap-1.5">
+                    <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Self-Correction Loop Active
+                </span>
+                <a href="/swagger-ui.html" target="_blank" class="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition flex items-center gap-1">
+                    <i class="fa-solid fa-code"></i> OpenAPI Docs
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- ================= COPILOT STUDIO TAB ================= -->
+        <div id="view-copilot" class="space-y-6">
+            <!-- Prompt & Control Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-20 -top-20 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="space-y-4 relative">
+                    <div class="flex items-center justify-between">
+                        <label for="user-prompt" class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                            <i class="fa-solid fa-terminal text-emerald-400"></i> Natural Language Database Query
+                        </label>
+                        <div class="flex items-center space-x-4 text-xs text-slate-400">
+                            <label class="flex items-center space-x-1.5 cursor-pointer">
+                                <input type="checkbox" id="chk-enable-cache" checked class="rounded bg-slate-800 border-slate-700 text-emerald-500 focus:ring-0">
+                                <span>Pgvector Semantic Cache</span>
+                            </label>
+                            <label class="flex items-center space-x-1.5 cursor-pointer">
+                                <input type="checkbox" id="chk-analyze-perf" checked class="rounded bg-slate-800 border-slate-700 text-emerald-500 focus:ring-0">
+                                <span>EXPLAIN Plan Optimizer</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="relative">
+                        <textarea id="user-prompt" rows="3" 
+                            placeholder="e.g. Show me the top 5 highest spending customers with their total order count and lifetime spend..."
+                            class="w-full bg-slate-950/90 border border-slate-700/80 rounded-xl p-4 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition text-sm sm:text-base resize-none"></textarea>
+                        
+                        <div class="absolute right-3 bottom-3 flex items-center space-x-2">
+                            <button id="btn-submit" onclick="executeCopilotQuery()" 
+                                class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-semibold text-sm flex items-center space-x-2 shadow-lg shadow-emerald-500/20 transition transform active:scale-95">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <span>Run Copilot</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Prompt Pills -->
+                    <div class="space-y-2">
+                        <div class="text-xs text-slate-400 font-medium">Try these benchmark queries:</div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="setPrompt('Show me the top 5 highest spending customers with their loyalty tier and total order count')" 
+                                class="prompt-chip text-xs bg-slate-800/80 hover:bg-slate-700/90 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700/50 transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-crown text-amber-400"></i> Top 5 spending customers
+                            </button>
+                            <button onclick="setPrompt('What is the total revenue and order count grouped by category for products?')" 
+                                class="prompt-chip text-xs bg-slate-800/80 hover:bg-slate-700/90 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700/50 transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-chart-pie text-sky-400"></i> Revenue by product category
+                            </button>
+                            <button onclick="setPrompt('Find customers who have signed up but have not placed any orders yet')" 
+                                class="prompt-chip text-xs bg-slate-800/80 hover:bg-slate-700/90 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700/50 transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-user-clock text-rose-400"></i> Inactive customers (churn risk)
+                            </button>
+                            <button onclick="setPrompt('List products with ratings above 4.7 that have low stock under 50 units')" 
+                                class="prompt-chip text-xs bg-slate-800/80 hover:bg-slate-700/90 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700/50 transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-star text-yellow-400"></i> High rated low-stock products
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Spinner State -->
+            <div id="loading-state" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center space-y-4">
+                <div class="inline-flex items-center justify-center p-4 rounded-2xl bg-emerald-500/10 text-emerald-400 animate-spin">
+                    <i class="fa-solid fa-circle-notch text-3xl"></i>
+                </div>
+                <h3 class="text-base font-semibold text-slate-200">Multi-Agent Workflow in Progress...</h3>
+                <p class="text-xs text-slate-400 max-w-md mx-auto">Evaluating semantic cache in Pgvector, inspecting schema context, verifying SQL guardrails, and executing with self-correction...</p>
+            </div>
+
+            <!-- Results Section (Visible after execution) -->
+            <div id="results-container" class="hidden space-y-6">
+                <!-- Summary Banner -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center space-x-3">
+                        <div id="badge-cache-icon" class="p-3 rounded-lg bg-emerald-500/10 text-emerald-400 text-lg">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400">Cache Status</div>
+                            <div id="res-cache-status" class="text-sm font-semibold text-slate-200">Pgvector Miss</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center space-x-3">
+                        <div class="p-3 rounded-lg bg-sky-500/10 text-sky-400 text-lg">
+                            <i class="fa-solid fa-stopwatch"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400">Total Latency</div>
+                            <div id="res-latency" class="text-sm font-semibold text-slate-200">0 ms</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center space-x-3">
+                        <div class="p-3 rounded-lg bg-purple-500/10 text-purple-400 text-lg">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400">Self-Corrections</div>
+                            <div id="res-corrections" class="text-sm font-semibold text-slate-200">0 retries</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center space-x-3">
+                        <div class="p-3 rounded-lg bg-emerald-500/10 text-emerald-400 text-lg">
+                            <i class="fa-solid fa-table-list"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400">Rows Returned</div>
+                            <div id="res-rows" class="text-sm font-semibold text-slate-200">0 rows</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Two-Column Grid: SQL + Explanation / Agent Execution Trace -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    
+                    <!-- Left: SQL & Results (7 Cols) -->
+                    <div class="lg:col-span-7 space-y-6">
+                        <!-- Generated SQL Card -->
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                            <div class="px-5 py-3.5 bg-slate-800/60 border-b border-slate-700/60 flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fa-solid fa-code text-emerald-400"></i>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Generated &amp; Verified SQL</span>
+                                </div>
+                                <button onclick="copySql()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded transition flex items-center gap-1">
+                                    <i class="fa-regular fa-copy"></i> Copy SQL
+                                </button>
+                            </div>
+                            <pre class="p-4 text-xs sm:text-sm font-mono text-emerald-300 bg-slate-950 overflow-x-auto leading-relaxed"><code id="res-sql">-- SQL will render here</code></pre>
+                            
+                            <div class="p-4 bg-slate-900/90 border-t border-slate-800 text-xs text-slate-300 flex items-start space-x-2">
+                                <i class="fa-solid fa-circle-info text-sky-400 mt-0.5"></i>
+                                <div id="res-explanation">Explanation will render here.</div>
+                            </div>
+                        </div>
+
+                        <!-- Tabular Data Results -->
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                            <div class="px-5 py-3.5 bg-slate-800/60 border-b border-slate-700/60 flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fa-solid fa-table text-sky-400"></i>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Database Execution Results</span>
+                                </div>
+                                <span id="res-exec-time" class="text-xs text-slate-400">Exec: 0 ms</span>
+                            </div>
+                            <div class="overflow-x-auto max-h-96">
+                                <table id="results-table" class="w-full text-left text-xs border-collapse">
+                                    <thead class="bg-slate-950 text-slate-400 border-b border-slate-800 sticky top-0" id="table-head">
+                                        <!-- Columns injected here -->
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-800/60 text-slate-200" id="table-body">
+                                        <!-- Rows injected here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- EXPLAIN Query Optimizer Card -->
+                        <div id="optimizer-card" class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                            <div class="px-5 py-3.5 bg-slate-800/60 border-b border-slate-700/60 flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fa-solid fa-gauge-high text-amber-400"></i>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-300">EXPLAIN Query Plan &amp; Optimizer</span>
+                                </div>
+                                <span id="res-plan-cost" class="text-xs text-amber-300 font-mono">Cost: 0.00</span>
+                            </div>
+                            <div class="p-4 space-y-3 text-xs">
+                                <div id="optimizer-recommendations" class="space-y-1 text-slate-300">
+                                    <!-- Recommendations injected here -->
+                                </div>
+                                <details class="cursor-pointer">
+                                    <summary class="text-xs text-slate-400 hover:text-slate-200">View Raw PostgreSQL EXPLAIN Tree</summary>
+                                    <pre id="raw-plan-output" class="mt-2 p-3 bg-slate-950 rounded-lg text-slate-400 font-mono overflow-x-auto text-[11px]"></pre>
+                                </details>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Multi-Agent Execution Trace (5 Cols) -->
+                    <div class="lg:col-span-5 space-y-4">
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                            <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fa-solid fa-network-wired text-emerald-400"></i>
+                                    <h3 class="text-sm font-bold text-slate-200">Multi-Agent Execution Trace</h3>
+                                </div>
+                                <span class="text-[11px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">LangChain4j Flow</span>
+                            </div>
+
+                            <!-- Timeline Steps Container -->
+                            <div id="timeline-container" class="space-y-4 relative before:absolute before:inset-0 before:left-3 before:w-0.5 before:bg-slate-800">
+                                <!-- Trace steps injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SCHEMA EXPLORER TAB ================= -->
+        <div id="view-schema" class="hidden space-y-6">
+            <div class="flex items-center justify-between bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                <div>
+                    <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-database text-emerald-400"></i> Active Database Schema
+                    </h2>
+                    <p class="text-xs text-slate-400">Live PostgreSQL introspection of tables, foreign keys, and column metadata.</p>
+                </div>
+                <button onclick="loadSchema()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-rotate-right"></i> Refresh Schema
+                </button>
+            </div>
+
+            <!-- Tables Grid -->
+            <div id="schema-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Schema tables injected here -->
+            </div>
+        </div>
+
+        <!-- ================= SEMANTIC CACHE ANALYTICS TAB ================= -->
+        <div id="view-cache" class="hidden space-y-6">
+            <!-- Metric KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow">
+                    <div class="text-xs text-slate-400 font-medium">Cache Hit Rate</div>
+                    <div id="metric-hit-rate" class="text-2xl font-bold text-emerald-400 mt-1">0%</div>
+                    <div class="text-[11px] text-slate-500 mt-1">HNSW Cosine Vector Matches</div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow">
+                    <div class="text-xs text-slate-400 font-medium">Latency Reduction</div>
+                    <div id="metric-latency-reduction" class="text-2xl font-bold text-sky-400 mt-1">45.0%</div>
+                    <div class="text-[11px] text-slate-500 mt-1">Cached vs Uncached Latency</div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow">
+                    <div class="text-xs text-slate-400 font-medium">Avg Cached Latency</div>
+                    <div id="metric-avg-cached" class="text-2xl font-bold text-purple-400 mt-1">8 ms</div>
+                    <div class="text-[11px] text-slate-500 mt-1">Sub-millisecond Pgvector lookup</div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow">
+                    <div class="text-xs text-slate-400 font-medium">LLM Tokens Saved</div>
+                    <div id="metric-tokens-saved" class="text-2xl font-bold text-amber-400 mt-1">0</div>
+                    <div class="text-[11px] text-slate-500 mt-1">Optimized API token usage</div>
+                </div>
+            </div>
+
+            <!-- Cached Queries Table -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                <div class="px-5 py-4 bg-slate-800/60 border-b border-slate-700/60 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-200">Pgvector Semantic Cache Storage</h3>
+                        <p class="text-xs text-slate-400">Stored 384-dimensional embeddings (All-MiniLM-L6-v2) with indexed verified SQL scripts</p>
+                    </div>
+                    <button onclick="clearCache()" class="px-3 py-1.5 bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 rounded-lg text-xs transition flex items-center gap-1.5">
+                        <i class="fa-regular fa-trash-can"></i> Flush Cache
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead class="bg-slate-950 text-slate-400 border-b border-slate-800">
+                            <tr>
+                                <th class="p-3">ID</th>
+                                <th class="p-3">Natural Language Query</th>
+                                <th class="p-3">Verified SQL Script</th>
+                                <th class="p-3">Hits</th>
+                                <th class="p-3">Latency</th>
+                                <th class="p-3">Last Accessed</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cache-table-body" class="divide-y divide-slate-800/60 text-slate-300">
+                            <!-- Cache rows injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-slate-950 py-4 text-center text-xs text-slate-500">
+        Agentic DB Copilot &amp; Query Optimizer • Built with LangChain4j, Spring Boot 3, and PostgreSQL Pgvector
+    </footer>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>

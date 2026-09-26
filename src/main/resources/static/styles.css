@@ -1,0 +1,63 @@
+/* Custom Styles for Agentic DB Copilot */
+@layer base {
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #475569;
+    }
+}
+
+.prompt-chip {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.prompt-chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.15);
+}
+
+.trace-step-item {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.trace-step-dot {
+    position: absolute;
+    left: 0.35rem;
+    top: 0.4rem;
+    width: 0.85rem;
+    height: 0.85rem;
+    border-radius: 50%;
+    transform: translateX(-50%);
+    background-color: #334155;
+    border: 2px solid #0f172a;
+    transition: all 0.3s ease;
+}
+
+.trace-step-dot.success {
+    background-color: #10b981;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+.trace-step-dot.retrying {
+    background-color: #f59e0b;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+}
+
+.trace-step-dot.failed {
+    background-color: #ef4444;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
+.trace-step-dot.miss {
+    background-color: #64748b;
+}
