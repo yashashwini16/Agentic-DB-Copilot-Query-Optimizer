@@ -1,4 +1,4 @@
-# 🧠 Agentic DB Copilot & Query Optimizer
+#  Agentic DB Copilot & Query Optimizer
 
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.4-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Java](https://img.shields.io/badge/Java-21%20LTS-orange.svg)](https://www.oracle.com/java/)
@@ -12,7 +12,7 @@ Featuring an automated **Self-Correction Feedback Loop** using LLM tool-calling 
 
 ---
 
-## 🌟 Key Highlights & Architecture
+##  Key Highlights & Architecture
 
 ```mermaid
 flowchart TD
@@ -48,19 +48,19 @@ flowchart TD
 
 ---
 
-## ✨ Core Features
+##  Core Features
 
-- 🤖 **Multi-Agent NL-to-SQL Pipeline**: Translates complex, multi-table business inquiries into performant, dialect-accurate PostgreSQL SQL.
-- 🔁 **LLM Tool-Calling Self-Correction Loop**: Catches schema mismatches, missing joins, invalid groupings, or type casting errors directly from `SQLException` and automatically rewrites the query until execution succeeds (up to $N$ attempts).
-- ⚡ **Pgvector Semantic Query Caching**: Calculates 384-dimensional vector embeddings with local in-process ONNX models (`All-MiniLM-L6-v2`) and matches historical intent with HNSW cosine similarity (`<=>`), bypassing redundant LLM calls and cutting response latency by **45–80%**.
-- 🛡️ **Enterprise Security Guardrails**: Enforces read-only compliance, query execution timeouts, row clamping, and blocks destructive SQL injections (`DROP`, `TRUNCATE`, `ALTER`, `GRANT`).
-- 📈 **EXPLAIN Performance Tuning Agent**: Automatically profiles execution cost and identifies sequential scans on large tables, suggesting optimal composite B-Tree indexes.
-- 🖥️ **Interactive Copilot Web Studio**: Built-in responsive dashboard with live agent timeline trace visualizer, tabular result viewer, database schema explorer, and vector cache analytics.
-- 🔌 **Pluggable LLM Providers**: Out-of-the-box support for OpenAI (`gpt-4o`, `gpt-4o-mini`), local Ollama (`llama3.1`, `qwen2.5-coder`), and a zero-dependency Mock provider for immediate local testing without API keys.
+- **Multi-Agent NL-to-SQL Pipeline**: Translates complex, multi-table business inquiries into performant, dialect-accurate PostgreSQL SQL.
+- **LLM Tool-Calling Self-Correction Loop**: Catches schema mismatches, missing joins, invalid groupings, or type casting errors directly from `SQLException` and automatically rewrites the query until execution succeeds (up to $N$ attempts).
+- **Pgvector Semantic Query Caching**: Calculates 384-dimensional vector embeddings with local in-process ONNX models (`All-MiniLM-L6-v2`) and matches historical intent with HNSW cosine similarity (`<=>`), bypassing redundant LLM calls and cutting response latency by **45–80%**.
+- **Enterprise Security Guardrails**: Enforces read-only compliance, query execution timeouts, row clamping, and blocks destructive SQL injections (`DROP`, `TRUNCATE`, `ALTER`, `GRANT`).
+- **EXPLAIN Performance Tuning Agent**: Automatically profiles execution cost and identifies sequential scans on large tables, suggesting optimal composite B-Tree indexes.
+- **Interactive Copilot Web Studio**: Built-in responsive dashboard with live agent timeline trace visualizer, tabular result viewer, database schema explorer, and vector cache analytics.
+- **Pluggable LLM Providers**: Out-of-the-box support for OpenAI (`gpt-4o`, `gpt-4o-mini`), local Ollama (`llama3.1`, `qwen2.5-coder`), and a zero-dependency Mock provider for immediate local testing without API keys.
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 | Layer | Technologies |
 |---|---|
@@ -73,7 +73,7 @@ flowchart TD
 
 ---
 
-## 🚀 Quickstart Guide
+## Quickstart Guide
 
 ### 1. Prerequisites
 - **Java 21 LTS** or later
@@ -115,10 +115,10 @@ The application will start at **`http://localhost:8080`**.
 
 ---
 
-## 💻 Using the Interactive Studio
+## Using the Interactive Studio
 
 Open your browser to:
-👉 **`http://localhost:8080`**
+**`http://localhost:8080`**
 
 - **Copilot Studio**: Enter natural language questions and watch the real-time agent execution trace (Cache Check $\to$ Schema Context $\to$ SQL Gen $\to$ Self-Correction $\to$ EXPLAIN Plan $\to$ Results Table).
 - **Schema Explorer**: View live relational schemas, primary keys, foreign keys, and column types.
@@ -127,7 +127,7 @@ Open your browser to:
 
 ---
 
-## 📡 REST API Reference
+## REST API Reference
 
 ### 1. Process Natural Language Query
 `POST /api/copilot/query`
@@ -193,7 +193,7 @@ Open your browser to:
 
 ---
 
-## 🧪 Running Automated Tests
+##  Running Automated Tests
 
 Run unit and integration tests across guardrails, in-process vector embedding similarity, and workflow services:
 
@@ -203,7 +203,7 @@ mvn test
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 agentic-db-copilot/
@@ -257,7 +257,7 @@ agentic-db-copilot/
 
 ---
 
-## 📜 Resume Bullet Alignment
+## Resume Bullet Alignment
 
 - **Multi-Agent SQL Translation**: Developed a Spring Boot/LangChain4j multi-agent system translating natural language queries into secure, executable SQL database scripts.
 - **Self-Correction Tool-Calling Loop**: Built a self-correction loop via LLM tool-calling (function-calling) to capture database execution errors and automatically rewrite queries.
